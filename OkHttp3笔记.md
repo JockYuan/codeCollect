@@ -23,7 +23,7 @@
 		}
 
 
-	header请求添加参数可以添加到Request 对象中
+	//header请求添加参数可以添加到Request 对象中
 	Request request = new Request.Builder()
 		.url(url)
 		.header("key", "value")
@@ -31,7 +31,7 @@
 		...
 		.build();
 
-	返回结果 response 的body 可以有多种输出方法, string()只是其中之一
+	//返回结果 response 的body 可以有多种输出方法, string()只是其中之一
 	response.body().bytes()
 	response.code() 返回结果状态码
 ```
