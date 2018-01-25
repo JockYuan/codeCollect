@@ -205,3 +205,32 @@ ByteBuffer[] bufferArray = {header, body};
 channel.write(bufferArray); // 将buffer数组中的数据写入到channel中.
 ```
 在写入数据时, 只有在buffer中的有效数据才能被写入(即position和limit之间的数据才会被写入). 当header的buffer中只有58个byte的数据时, 这58个数据将会被写入到channel中, Gathering writes可以处理动态消息.
+
+### 通道之间的数据传输
+##### transferFrom()
+FileChannel的transferFrom()方法可以将数据从源通道传输到FileChannel中
+```java
+RandomAccessFile fromFile = new RandomAccessFile("fromFile.txt", "rw");
+FileChannel fromChannel = fromFile.getChannel();
+RandomAccessFile toFile = new RandomAccessFile("toFile.txt", "rw");
+FileChannel toChannel = toFile.getChannel();
+long position = 0;
+long count = fromChannel.size();
+toChannel.transferFrom(fromChannel,position,  count);
+```
+
+##### transferTot()
+transferTo()方法将数据从FileChannel传输到其他的channel中.
+```java
+RandomAccessFile fromFile = new RandomAccessFile("fromFile.txt", "rw");
+FileChannel      fromChannel = fromFile.getChannel();
+
+RandomAccessFile toFile = new RandomAccessFile("toFile.txt", "rw");
+FileChannel      toChannel = toFile.getChannel();
+
+long position = 0;
+long count = fromChannel.size();
+
+fromChannel.transferTo(position, count, toChannel);
+```
+关于SocketChannel的transferTo()方法同样存在. SocketChannel会一直传输数据知道目标buffer填满.
