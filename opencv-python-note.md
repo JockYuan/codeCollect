@@ -301,7 +301,8 @@ while(1):
 #### 图像的阈值转换
 - 学习函数cv2.threshold(), cv2.adaptiveThreshold
 
-cv2.threshold() 假如像素值大于threshold 阈值, 像素将设定一个值(白色white),其他小于等于的设置另外一个值(黑色black).
+##### cv2.threshold()
+假如像素值大于threshold 阈值, 像素将设定一个值(白色white),其他小于等于的设置另外一个值(黑色black).
 第一个参数为输入图像, 应该是灰阶图像, 第二个参数值为阈值
 第三个参数为maxVal, 第四个参数指定阈值应用的不同风格
  - cv2.THRESH_BINARY
@@ -335,7 +336,47 @@ plt.show()
 
  ![](https://opencv-python-tutroals.readthedocs.io/en/latest/_images/threshold.jpg)
 
+##### cv2.adaptiveThreshold
+适应性阈值, 在小范围内计算阈值, 而不是采用全局阈值, 对于亮度不均匀的图像效果更好
+
+输入参数
+- cv2.ADAPTIVE_THRESH_MEAN_C : 阈值取周边区域的平均值
+- cv2.ADAPTIVE_THRESH_GAUSSIAN_C : 阈值取周边区域进行加权的高斯计算出的结果
+
+**Block Size** 临近区域大小
+
+**C** 常量, 邻近区域加权计算后减去的常量
+```python
+import cv2
+import numpy as np
+
+from matplotlib import pyplot as plt
+
+img = cv2.imread('img/qipan.png',0)
+# img = cv2.medianBlur(img, 5)
+ret, th1 = cv2. threshold(img, 127, 255, cv2.THRESH_BINARY)
+th2 = cv2.adaptiveThreshold(img, 255, cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY, 11, 2)
+th3 = cv2.adaptiveThreshold(img, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 11, 2)
+
+titles = ['Original Image', 'Globale Thresholding', 'Adaptive Mean Thresholding', 'Adaptive Gaussian Thresholding']
+images = [img, th1, th2,th3]
+
+for i in range(0,4):
+    plt.subplot(2,2,i+1), plt.imshow(images[i], 'gray')
+    plt.title(titles[i])
+    plt.xticks([]), plt.yticks([])
+plt.show()
+```
+结果:
+![](https://opencv-python-tutroals.readthedocs.io/en/latest/_images/ada_threshold.jpg)
+
+##### Otsu's 双值化
+
+
+
+
 #### 图像平滑(Smoothing Images)
+
 
 #### 形态变换(Morphological Transformations)
 
