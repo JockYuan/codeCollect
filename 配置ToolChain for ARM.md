@@ -65,3 +65,26 @@ make distclean
 make
 make install
 ```
+
+### 编译安装GCC
+#### ARM核心头文件
+对于本机编译工具集, 通常核心头文件已经安装在/usr/src/linux/include,或被gcc拷贝到搜索路径内.
+对于ARM交叉编译工具集, 需要提前ARM核心头文件, 这里是Linux-2.4.27-vrs1.tar.bz2
+
+```bash
+tar -jxvf linux-2.4.27-vrs1.tar.bz2 -C ~
+cd ~
+ln -s linux-2.4.27-vrs1-ATMEL armlinux  #建立了代码联接 ~/armlinux
+
+vim Makefile #修改makefile, ARCH:=arm CROSS_COMPILE:=/usr/local/arm/bin/arm-pc-linux-
+make clean
+make distclean
+make menuconfig #配置核心
+make dep #理顺核心文件间的关系
+
+mkdir /usr/local/arm/arm-pc-linux/sys-include
+
+cp -dR ~/armlinux/include/asm-arm  /usr/local/arm/arm-pc-linux/sys-include/asm
+cp -dR ~/armlinux/include/linux    /usr/local/arm/arm-pc-linux/sys-include/linux
+
+```

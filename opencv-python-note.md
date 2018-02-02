@@ -1,5 +1,58 @@
 # OpenCV-Python 指南
 
+# 开始
+
+### 目标
+> 学习如何读取图像, 显示图像, 保存图像
+> 学习函数cv2.imread(), cv2.imshow(), cv2.imwrite()
+> 学习使用Matplotlib显示图像
+
+### 使用OpenCV
+#### 读取图像
+使用函数cv2.imread()读取图像, 图像应该是在工作目录下或者全路径下
+
+第二个参数是一个flag, 指定那种方式读取图像
+cv2.IMREAD_COLOR: 读取彩色图像, 图像的透明部分将被忽略, 默认flag  (值为1)
+cv2.IMREAD_GRAYSCALE: 使用灰度级模式读取图像 (值为0)
+cv2.IMREAD_UNCHANGED: 读取全部图像, 包括alpha通道 (值为-1)
+
+```python
+import numpy as np
+import cv2
+# 用灰度模式加载以一张彩色图像
+img = cv2.imread('mess5.jpg',0)
+```
+#### 显示图像
+使用函数cv2.imshow()在一个窗口中显示图像.
+
+第一个参数是窗口标题字符串
+第二个参数为图像对象
+
+```python
+cv2.imshow('image', img)
+cv2.waitKey(0)
+cv2.destroyAllWindows()
+```
+cv2.waitKey() 参数为毫秒, 是指在这个时间内等待按键事件, 当有按键来时, 程序将继续执行; 若为0, 则无限等待按键事件
+cv2.destroyAllWindows() 关闭所有窗口
+cv2.destroyWindow() 关闭指定窗口
+
+使用cv2.namedWindow() 可以改变窗口模式, 如可以调整大小, 默认为cv2.WINDOW_NORMAL.
+
+```python
+cv2.namedWindow('image', cv2.WINDOW_NORMAL)
+cv2.imshow('image', img)
+cv2.waitKey(0)
+cv2.destroyAllWindows()
+```
+
+#### 保存图像
+使用函数cv2.imwrite()保存图像
+```python
+cv2.imwrite('messigray.png',img)
+```
+
+
 ## OpenCV 的GUI功能
 
 ### 鼠标作为画刷
@@ -184,3 +237,126 @@ cv2.imshow('dst', dst)
 cv2.waitKey(0)
 cv2.destroyAllWindows()
 ```
+### 图像处理
+#### 改变颜色空间
+- 颜色空间转换RGB<->GRAY, BGR <-> HSV 等
+- 抽取视频颜色对象
+- 学习使用CV2.cvtColor(), cv2.inRange()
+
+##### 改变颜色空间
+OpenCV 支持超过150 中颜色空间, 常用的两种主要是BGR <-> GRAY, BGR <-> HSV
+使用函数cv2.cvtColor(intput_image, flag) 转换
+flag 确定是要转换到哪种类型的颜色空间
+
+BGR <-> GRAY  flag为 cv2.COLOR_BGR2GRAY
+BGR <-> HSV flag 为 cv2.COLOR_BGR2HSV
+
+列举所有的支持转换的颜色空间
+```python
+import cv2
+flags = [i for i in dir(cv2) if i.startswith('COLOR_')]
+print(flags)
+```
+##### 对象追踪(Object Tracking)
+对于视频来追踪相应对象
+将BRG颜色空间转成HSV颜色空间,
+HSV更容易表示一个颜色.
+
+步骤:
+- 获取视频的一帧
+- 转换BGR到HSV颜色空间
+- 设置HSV图像中阈值来获取蓝色范围
+- 抽取蓝色对象做后续处理
+```python
+import cv2
+import numpy as np
+
+cap = cv2.VideoCapture(0)
+
+while(1):
+  # Take each frame
+  _, frame = cap.read()
+  # Convert BGR to HSV
+  hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
+  # define range of blue color in HSV
+  lower_blue = np.array([110, 50,50])
+  upper_blue = np.array([130, 255,255])
+
+  # Threshold the HSV image to get only blue colors
+  mask = cv2.inRange(hsv, lower_blue, upper_blue)
+  # Bitwise_AND mask and original image
+  res = cv2.bitwise_and(frame, frame, mask= mask)
+  cv2.imshow('frame', frame)
+  cv2.imshow('mask', mask)
+  cv2.imshow('res', res)
+  k = cv2.waitKey(5)&0xFF
+  if k == 27:
+    break
+  cv2.destroyAllWindows()
+```
+
+
+#### 图像的几何变换
+
+#### 图像的阈值转换
+- 学习函数cv2.threshold(), cv2.adaptiveThreshold
+
+cv2.threshold() 假如像素值大于threshold 阈值, 像素将设定一个值(白色white),其他小于等于的设置另外一个值(黑色black).
+第一个参数为输入图像, 应该是灰阶图像, 第二个参数值为阈值
+第三个参数为maxVal, 第四个参数指定阈值应用的不同风格
+ - cv2.THRESH_BINARY
+ - cv2.THRESH_BINARY_INV
+ - cv2.THRESH_TRUNC
+ - cv2.THRESH_TOZERO
+ - cv2.THRESH_TOZERO_INV
+```python
+import cv2
+import numpy as np
+from matplotlib import pyplot as plt
+
+img = cv2.imread('gradient.png',0)
+ret, thresh1 = cv2.threshold(img, 127, 255, cv2.THRESH_BINARY)
+ret, thresh2 = cv2.threshold(img, 127, 255, cv2.THRESH_BINARY_INV)
+ret, thresh3 = cv2.threshold(img, 127, 255, cv2.THRESH_TRUNC)
+ret, thresh4 = cv2.threshold(img, 127, 255, cv2.THRESH_TOZERO)
+ret, thresh5 = cv2.threshold(img, 127, 255, cv2.THRESH_TOZERO_INV)
+
+titles = ['Original Image','BINARY','BINARY_INV','TRUNC','TOZERO','TOZERO_INV']
+images = [img, thresh1, thresh2, thresh3, thresh4, thresh5]
+
+for i in xrange(6):
+    plt.subplot(2,3,i+1),plt.imshow(images[i],'gray')
+    plt.title(titles[i])
+    plt.xticks([]),plt.yticks([])
+
+plt.show()
+
+```
+
+ ![](https://opencv-python-tutroals.readthedocs.io/en/latest/_images/threshold.jpg)
+
+#### 图像平滑(Smoothing Images)
+
+#### 形态变换(Morphological Transformations)
+
+#### 图像渐变(Image Gradients)
+
+#### Canny 边缘检测
+
+#### 图像金字塔 (Image Pyramids)
+
+#### 轮廓提取(Contours in OpenCV)
+
+#### 直方图(Hisograms in OpenCV)
+
+#### 图像变换(Image Transforms in OpenCV)
+
+#### 模板匹配(Template Matching)
+
+#### 霍夫线性变换(Hough Line Transform)
+
+#### 霍夫圆形变换(Hough Circle Transform)
+
+#### 使用分水岭算法分割图像(Image Segmentation with Watershed Algorithm)
+
+#### 使用GrabCut算法进行前景抽取(Interactive Foreground Extraction using GrabCut Algorithm)
