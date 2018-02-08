@@ -372,10 +372,142 @@ plt.show()
 
 ##### Otsu's 双值化
 
+![](https://opencv-python-tutroals.readthedocs.io/en/latest/_images/otsu.jpg)
 
+Otsu's Binarization 工作原理 是查找图像的直方图中的两个峰值, 阈值取这两个峰值之间的区域, 这样可以尽可能的将图像中大部分的数据图像分开.
 
+It actually finds a value of t which lies in between two peaks such that variances to both classes are minimum.
+
+##### 图像的几何变换
+- 学习不同的图像几何变换: 平移, 旋转, 仿射变换(affine 仿射转换指的是平行线在转换后还保持平行)
+- 学习函数 cv2.getPerspectiveTransform()
+
+OpenCV 提供了两个变换函数: cv2.warpAffine, cv2.warpPerspective
+cv2.warpAffine 使用一个2*3的转移矩阵
+cv2.warpPerspective 使用一个3*3的转移矩阵
+
+###### 缩放
+OpenCV 使用cv2.resize()函数来实现缩放
+可以制定缩放图像大小, 或者制定缩放因子
+差值方式:
+cv2.INTER_AREA 缩小
+cv2.INTER_CUBIC cv2.INTER_LINEAR 放大
+
+```python
+import cv2
+import numpy as np
+
+img = cv2.imread('messi5.jpg')
+res = cv2.resize(img, None, fx=2, fy=2, interpolation = cv2.INTER_CUBIC)
+# OR
+height, width = img.shape[:2]
+res = cv2.resize(img, (2*width, 2*height), interpolation = cv2.INTER_CUBIC)
+```
+###### 移动
+转移矩阵M
+![](https://opencv-python-tutroals.readthedocs.io/en/latest/_images/math/22fe551f03b8e94f1a7a75731a660f0163030540.png)
+
+使用函数cv2.warpAffine()
+```python
+import cv2
+import numpy as np
+
+img = cv2.imread('messi5.jpg',0)
+rows, cols = img.shape
+
+M = np.float32([[1,0,100],[0,1,50]])
+dst = cv2.warpAffine(img, M, (cols, rows))
+
+cv2.imshow('img', dst)
+cv2.waitKey(0)
+cv2.destroyAllWindows()
+```
+###### 旋转
+旋转角度设为θ, 则图像的旋转矩阵为 (原点为0,0)
+![](https://opencv-python-tutroals.readthedocs.io/en/latest/_images/math/f3a6bed945808a1f3a9df71b260f68f8e653af95.png)
+
+OpenCV提供了可以使用给点(x,y)原点坐标的旋转, 则图像的旋转矩阵为
+![](https://opencv-python-tutroals.readthedocs.io/en/latest/_images/math/91ff2b9b1db0760f4764631010749e594cdf5f5f.png)
+
+where
+![](https://opencv-python-tutroals.readthedocs.io/en/latest/_images/math/383c254fc602c57a059a8296357f90fdf421aee7.png)
+
+OpenCV 提供函数cv2.getRotationMatrix2D()来生成矩阵
+```python
+img = cv2.imread('messi5.jpg',0)
+rows, cols = img.shape
+
+M = cv2.getRotationMatrix2D((cols/2, rows/2), 90, 1)
+dst = cv2.warpAffine(img, M, (cols, rows))
+```
+###### Affine Transformation(仿射变换)
+仿射变换, 是指所有的在输入的平行线, 在输出时仍然保持平行
+```python
+img = cv2.imread('drawing.png')
+rows, cols, ch = img.shape
+
+pts1 = np.float32([[50,50],[200,50],[50,200]])
+pts2 = np.float32([[10,100],[200,50], [100,250]])
+
+M = cv2.getAffineTransform(pts1, pts2)
+dst = cv2.warpAffine(img, M, (cols, rows))
+plt.subpolt(121), plt.imshow(img), plt.title('Input')
+plt.subplot(122), plt.imshow(dst), plt.title('Output')
+plt.show()
+```
+![](https://opencv-python-tutroals.readthedocs.io/en/latest/_images/affine.jpg)
+
+###### Perspective Transformation (透视变换)
+需要一个3*3的矩阵,直线在变化后仍然为直线,
+需要4个点来确定该矩阵, 通过函数cv2.getPerspectiveTransform()来获取
+通过cv2.warpPerspective()函数应用图像变换
+```python
+img = cv2.imread('sudokusmaill.png')
+rows,cols,ch = img.shape
+
+pts1 = np.float32([[56,65],[368,52],[28,387],[389,390]])
+pts2 = np.float32([[0,0],[300,0],[0,300],[300,300]])
+
+M = cv2.getPerspectiveTransform(pts1, pts2)
+
+dst = cv2.warpPerspective(img, M, (300,300))
+plt.subplot(121), plt.imshow(img), plt.title('Input')
+plt.subplot(122), plt.imshow(dst), plt.title('Output')
+plt.show()
+```
+![](https://opencv-python-tutroals.readthedocs.io/en/latest/_images/perspective.jpg)
 
 #### 图像平滑(Smoothing Images)
+目标:
+- 使用低通滤波器平滑图像
+- 使用自定义的过滤器处理图像
+##### 2D Convolution(Image Filtering)
+图像可以使用低通滤波器(LPF)和高通滤波器(HPF)
+低通滤波器可以移除噪点或者平滑图像
+高通滤波器可以用来在图像上寻找边界
+
+OpenCV 提供cv2.filter2D() 卷积内核来处理图像
+一个5*5平均过滤器算子
+![](https://opencv-python-tutroals.readthedocs.io/en/latest/_images/math/220e403e44b16ea8e05d350c4ce69e9aedff5bd1.png)
+
+```python
+import cv2
+import numpy as np
+
+img = cv2.imread('opencv_logo.png')
+
+kernel = np.ones((5,5), np.float32)/25
+dst = cv2.filter2D(img, -1, kernel)
+
+plt.subplot(121),plt.imshow(img),plt.title('Original')
+plt.xticks([]), plt.yticks([])
+plt.subplot(122),plt.imshow(dst),plt.title('Averaging')
+plt.xticks([]), plt.yticks([])
+plt.show()
+```
+![](https://opencv-python-tutroals.readthedocs.io/en/latest/_images/filter.jpg)
+
+
 
 
 #### 形态变换(Morphological Transformations)
